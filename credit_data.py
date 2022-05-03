@@ -3,29 +3,44 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+from sklearn import model_selection
 import joblib
 
 
-def load_data() -> tuple:
-    train_df = pd.read_csv('data/train.csv')
-    test_df = pd.read_csv('data/test.csv')
+def load_data(path='data/train.csv', test_size=0.3) -> tuple:
+    train_data, train_label = load_df(path)
+    pipe = joblib.load('credit_pipe.pkl')
 
-    train_data = train_df.drop(['index', 'FLAG_MOBIL', 'credit'], axis=1)
-    test_data = test_df.drop(['index', 'FLAG_MOBIL'], axis=1)
+    if not len(train_label):
+        return pipe.fit_transform(train_data)
 
-    train_data = prep_data(train_data)
-    test_data = prep_data(test_data)
+    train_label = np.array(train_label[['credit']])
 
-    pipe = joblib.load(f'credit_pipe.pkl')
+    train_data, test_data, train_label, test_label = \
+        model_selection.train_test_split(train_data, train_label, test_size=test_size, random_state=0)
+
     train_data = pipe.fit_transform(train_data)
-    test_data = pipe.fit_transform(test_data)
+    test_data = pipe.transform(test_data)
 
-    train_label = np.array(train_df[['credit']])
-
-    return (train_data, train_label), (test_data)
+    return train_data, test_data, train_label, test_label
 
 
-def prep_data(df) -> pd.DataFrame:
+def load_df(path='data/train.csv') -> tuple:
+    train_df = pd.read_csv(path)
+
+    train_data = train_df.drop(['FLAG_MOBIL'], axis=1)
+    train_data = prep_data(train_data)
+
+    if 'credit' not in train_data.columns.tolist():
+        return train_data, None
+
+    train_label = train_data[['index', 'credit']]
+    train_data = train_data.drop(['credit'], axis=1)
+
+    return train_data, train_label
+
+
+def prep_data(df: pd.DataFrame) -> pd.DataFrame:
 
     data = df.copy()
     data = data[data['occyp_type'].notnull() | (data['DAYS_EMPLOYED'] > 0)]
@@ -69,3 +84,22 @@ def get_name_dict() -> dict:
                             'Waiters/barmen staff': 14, 'Secretaries': 15, 'Realty agents': 16, 'HR staff': 17, 'IT staff': 18}
 
     return name_dict
+
+
+def make_pipeline():
+    numerical_transformer = StandardScaler()
+    numerical_features = ['income_total', 'age', 'employed_year', 'begin_year']
+
+    categorical_transformer = OneHotEncoder(categories='auto', handle_unknown='ignore')
+    categorical_features = ['gender', 'car', 'reality', 'child_num',
+                            'income_type', 'edu_type', 'family_type', 'house_type',
+                            'work_phone', 'phone', 'email', 'occyp_type', 'family_size']
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', numerical_transformer, numerical_features),
+            ('cat', categorical_transformer, categorical_features)])
+
+    pipe = Pipeline(steps=[('preprocessor', preprocessor)])
+
+    joblib.dump(pipe, 'credit_pipe.pkl', compress=True)
