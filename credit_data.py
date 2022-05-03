@@ -3,29 +3,42 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+from sklearn import model_selection
 import joblib
 
 
-def load_data() -> tuple:
+def load_data(test_size=0.3) -> tuple:
     train_df = pd.read_csv('data/train.csv')
-    test_df = pd.read_csv('data/test.csv')
 
-    train_data = train_df.drop(['index', 'FLAG_MOBIL', 'credit'], axis=1)
-    test_data = test_df.drop(['index', 'FLAG_MOBIL'], axis=1)
-
+    train_data = train_df.drop(['FLAG_MOBIL'], axis=1)
     train_data = prep_data(train_data)
-    test_data = prep_data(test_data)
+
+    train_label = np.array(train_data[['credit']])
+    train_data = train_data.drop(['credit'], axis=1)
+
+    train_data, test_data, train_label, test_label = \
+        model_selection.train_test_split(train_data, train_label, test_size=test_size, random_state=0)
 
     pipe = joblib.load(f'credit_pipe.pkl')
     train_data = pipe.fit_transform(train_data)
-    test_data = pipe.fit_transform(test_data)
+    test_data = pipe.transform(test_data)
 
-    train_label = np.array(train_df[['credit']])
-
-    return (train_data, train_label), (test_data)
+    return train_data, test_data, train_label, test_label
 
 
-def prep_data(df) -> pd.DataFrame:
+def load_df(path='data/train.csv') -> tuple:
+    train_df = pd.read_csv(path)
+
+    train_data = train_df.drop(['FLAG_MOBIL'], axis=1)
+    train_data = prep_data(train_data)
+
+    train_label = train_data[['index', 'credit']]
+    train_data = train_data.drop(['credit'], axis=1)
+
+    return train_data, train_label
+
+
+def prep_data(df: pd.DataFrame) -> pd.DataFrame:
 
     data = df.copy()
     data = data[data['occyp_type'].notnull() | (data['DAYS_EMPLOYED'] > 0)]
