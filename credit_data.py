@@ -4,7 +4,7 @@ from sklearn import model_selection
 import joblib
 
 
-def load_data(name='train', test_size=0.3, pipeline=True) -> tuple:
+def load_data(name='train', test_size=0.3, encoding=True) -> tuple:
     if not name:
         name = 'train'
         train_data = pd.read_csv(f'original_data/{name}.csv')
@@ -21,7 +21,7 @@ def load_data(name='train', test_size=0.3, pipeline=True) -> tuple:
     else:
         test_data, test_label = train_data.copy(), train_label.copy()
 
-    if pipeline:
+    if encoding:
         pipe = joblib.load(f'credit_data/{name}_pipe.pkl')
         train_data = pipe.fit_transform(train_data)
         test_data = pipe.transform(test_data)
