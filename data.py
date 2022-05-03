@@ -37,9 +37,12 @@ def prep_data(df) -> pd.DataFrame:
 
     data['child_num'] = data['child_num'].apply(lambda x: 4 if x > 4 else x)
     data['DAYS_BIRTH'] = data['DAYS_BIRTH'].apply(lambda x: (x*-1)/365)
+    data['DAYS_EMPLOYED'] = data['DAYS_EMPLOYED'].apply(lambda x: 0.0 if x > 0.0 else x)
     data['DAYS_EMPLOYED'] = data['DAYS_EMPLOYED'].apply(lambda x: (x*-1)/365)
     data['begin_month'] = data['begin_month'].apply(lambda x: (x*-1)/12)
     data['family_size'] = data['family_size'].apply(lambda x: 6 if x > 6 else x)
+    data = data.rename(columns={'DAYS_BIRTH':'age','DAYS_EMPLOYED':'employed_year',
+                                'begin_month':'begin_year'})
 
     name_dict = get_name_dict()
     data['income_type'].replace(name_dict['income'], inplace=True)
