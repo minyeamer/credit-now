@@ -17,7 +17,8 @@ def load_data(path='data/train.csv', test_size=0.3) -> tuple:
     train_label = np.array(train_label[['credit']])
 
     train_data, test_data, train_label, test_label = \
-        model_selection.train_test_split(train_data, train_label, test_size=test_size, random_state=0)
+        model_selection.train_test_split(train_data, train_label, test_size=test_size,
+                                        random_state=0, stratify=train_label)
 
     train_data = pipe.fit_transform(train_data)
     test_data = pipe.transform(test_data)
