@@ -1,4 +1,3 @@
-from codecs import ignore_errors
 import numpy as np
 import pandas as pd
 from sklearn import model_selection
@@ -88,9 +87,10 @@ def set_extra_features(df: pd.DataFrame, client_input: list) -> pd.DataFrame:
     data['days_income'] = data['income_total'] / (data['DAYS_BIRTH']+data['DAYS_EMPLOYED'])
     data['income_per'] = data['income_total'] / data['family_size']
 
-    data['id'] = str()
-    for column in client_input:
-        data['id'] += data[column].astype(str) + '_'
+    # id 열은 새로운 데이터에 적용하기 적절하지 않기 때문에 제거, 향후 중복 여부를 판단하는 열로 변경해서 시도
+    # data['id'] = str()
+    # for column in client_input:
+    #     data['id'] += data[column].astype(str) + '_'
 
     return data
 
@@ -104,11 +104,13 @@ def set_ordinal_encoding(df: pd.DataFrame, name: str) -> pd.DataFrame:
         ordianl_encoder = OrdinalEncoder(cat_features)
         data[cat_features] = ordianl_encoder.fit_transform(data[cat_features],data['credit'])
         joblib.dump(ordianl_encoder, 'credit_data/train_ord_pipe.pkl')
-        make_pipeline(data, num_features, cat_features)
     else:
         ordianl_encoder = joblib.load('credit_data/train_ord_pipe.pkl')
         data[cat_features] = ordianl_encoder.transform(data[cat_features])
-    data['id'] = data['id'].astype('int64')
+    # data['id'] = data['id'].astype('int64')
+
+    if name == 'train':
+        make_pipeline(data, num_features, cat_features)
 
     return data
 
@@ -151,13 +153,13 @@ def make_pipeline(df: pd.DataFrame, num_features: list, cat_features: list):
 ###########################################################################
 
 
-def old_load_data(name='train', test_size=0.3, encoding=True) -> tuple:
+def load_data(name='train_old', test_size=0.3, encoding=True) -> tuple:
     if not name:
         name = 'train'
         train_data = pd.read_csv(f'original_data/{name}.csv')
         train_data = old_preprocess_data(train_data)
     else:
-        train_data = pd.read_csv(f'credit_data/{name}_old.csv')
+        train_data = pd.read_csv(f'credit_data/{name}.csv')
     train_label = np.array(train_data[['credit']])
 
     if test_size:
