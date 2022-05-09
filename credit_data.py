@@ -61,12 +61,13 @@ def preprocess_data(df: pd.DataFrame, name='train') -> pd.DataFrame:
     data[date_columns] = data[date_columns].apply(lambda x: abs(x))
 
     data = set_extra_features(data, client_input)
-    data.columns = data.columns.map(lambda x: str(x).lower())
+    data.drop(['child_num','DAYS_BIRTH','DAYS_EMPLOYED'], axis=1, inplace=True)
     data = set_ordinal_encoding(data, name)
     data = set_clustering(data, name)
 
     columns = data.drop(['index','credit'], axis=1).columns.tolist()
     data = data.reindex(columns=['index']+sorted(columns)+['credit'])
+    data.set_index('index').to_csv(f'credit_data/{name}.csv')
 
     return data
 
@@ -75,10 +76,16 @@ def set_extra_features(df: pd.DataFrame, client_input: list) -> pd.DataFrame:
     data = df.copy()
 
     data['age'] = data['DAYS_BIRTH'] // 365
+    df['month_birth'] = np.floor(data['DAYS_BIRTH']/30) - ((np.floor(data['DAYS_BIRTH']/30)/12).astype(int)*12)
+    df['week_birth'] = np.floor(data['DAYS_BIRTH']/7) - ((np.floor(data['DAYS_BIRTH']/7)/4).astype(int)*4)
+
     data['career'] = data['DAYS_EMPLOYED'] // 365
     data['days_unemployed'] = data['DAYS_BIRTH'] - data['DAYS_EMPLOYED']
+    df['month_unemployed'] = np.floor(data['days_unemployed']/30) - ((np.floor(data['days_unemployed']/30)/12).astype(int)*12)
+    df['week_unemployed'] = np.floor(data['days_unemployed']/7) - ((np.floor(data['days_unemployed']/7)/4).astype(int)*4)
+
     data['days_income'] = data['income_total'] / (data['DAYS_BIRTH']+data['DAYS_EMPLOYED'])
-    data['per_income'] = data['income_total'] / data['family_size']
+    data['income_per'] = data['income_total'] / data['family_size']
 
     data['id'] = str()
     for column in client_input:
