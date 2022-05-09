@@ -56,6 +56,7 @@ def preprocess_data(df: pd.DataFrame, name='train') -> pd.DataFrame:
                             for emp, occ in zip(data['DAYS_EMPLOYED'],data['occyp_type'])]
 
     data['family_size'] = data['family_size'].apply(lambda x: 6 if x > 6 else x)
+    data[['work_phone','phone','email']] = data[['work_phone','phone','email']].astype('object')
 
     date_columns = ['DAYS_BIRTH', 'DAYS_EMPLOYED', 'begin_month']
     data[date_columns] = data[date_columns].apply(lambda x: abs(x))
@@ -90,7 +91,7 @@ def set_extra_features(df: pd.DataFrame, client_input: list) -> pd.DataFrame:
     data['id'] = str()
     for column in client_input:
         data['id'] += data[column].astype(str) + '_'
-    
+
     return data
 
 
