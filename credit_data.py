@@ -76,13 +76,13 @@ def set_extra_features(df: pd.DataFrame, client_input: list) -> pd.DataFrame:
     data = df.copy()
 
     data['age'] = data['DAYS_BIRTH'] // 365
-    df['month_birth'] = np.floor(data['DAYS_BIRTH']/30) - ((np.floor(data['DAYS_BIRTH']/30)/12).astype(int)*12)
-    df['week_birth'] = np.floor(data['DAYS_BIRTH']/7) - ((np.floor(data['DAYS_BIRTH']/7)/4).astype(int)*4)
+    data['month_birth'] = np.floor(data['DAYS_BIRTH']/30) - ((np.floor(data['DAYS_BIRTH']/30)/12).astype(int)*12)
+    data['week_birth'] = np.floor(data['DAYS_BIRTH']/7) - ((np.floor(data['DAYS_BIRTH']/7)/4).astype(int)*4)
 
     data['career'] = data['DAYS_EMPLOYED'] // 365
     data['days_unemployed'] = data['DAYS_BIRTH'] - data['DAYS_EMPLOYED']
-    df['month_unemployed'] = np.floor(data['days_unemployed']/30) - ((np.floor(data['days_unemployed']/30)/12).astype(int)*12)
-    df['week_unemployed'] = np.floor(data['days_unemployed']/7) - ((np.floor(data['days_unemployed']/7)/4).astype(int)*4)
+    data['month_unemployed'] = np.floor(data['days_unemployed']/30) - ((np.floor(data['days_unemployed']/30)/12).astype(int)*12)
+    data['week_unemployed'] = np.floor(data['days_unemployed']/7) - ((np.floor(data['days_unemployed']/7)/4).astype(int)*4)
 
     data['days_income'] = data['income_total'] / (data['DAYS_BIRTH']+data['DAYS_EMPLOYED'])
     data['income_per'] = data['income_total'] / data['family_size']
