@@ -5,8 +5,14 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from category_encoders.ordinal import OrdinalEncoder
 import joblib
+import subprocess
+try:
+    from category_encoders.ordinal import OrdinalEncoder
+except:
+    subprocess.call(['pip','install','category_encoders'])
+finally:
+    from category_encoders.ordinal import OrdinalEncoder
 
 
 def load_train_data(path='credit_data', name='train', test_size=0.3, encoding=True) -> tuple:
@@ -65,8 +71,11 @@ def preprocess_data(df: pd.DataFrame, name='train') -> pd.DataFrame:
     data = set_ordinal_encoding(data, name)
     data = set_clustering(data, name)
 
-    columns = data.drop(['index','credit'], axis=1).columns.tolist()
-    data = data.reindex(columns=['index']+sorted(columns)+['credit'])
+    if name == 'train':
+        columns = data.drop(['index','credit'], axis=1).columns.tolist()
+        data = data.reindex(columns=['index']+sorted(columns)+['credit'])
+    else:
+        data = data.reindex(columns=['index']+sorted(data.columns.tolist()[1:]))
     data.set_index('index').to_csv(f'credit_data/{name}.csv')
 
     return data
@@ -153,13 +162,13 @@ def make_pipeline(df: pd.DataFrame, num_features: list, cat_features: list):
 ###########################################################################
 
 
-def load_data(name='train_old', test_size=0.3, encoding=True) -> tuple:
+def load_data(name='train', test_size=0.3, encoding=True) -> tuple:
     if not name:
         name = 'train'
         train_data = pd.read_csv(f'original_data/{name}.csv')
         train_data = old_preprocess_data(train_data)
     else:
-        train_data = pd.read_csv(f'credit_data/{name}.csv')
+        train_data = pd.read_csv(f'credit_data/{name}_old.csv')
     train_label = np.array(train_data[['credit']])
 
     if test_size:
@@ -171,7 +180,7 @@ def load_data(name='train_old', test_size=0.3, encoding=True) -> tuple:
         test_data, test_label = train_data.copy(), train_label.copy()
 
     if encoding:
-        pipe = joblib.load(f'credit_data/{name}_pipe.pkl')
+        pipe = joblib.load(f'credit_data/{name}_old_pipe.pkl')
         train_data = pipe.fit_transform(train_data)
         test_data = pipe.transform(test_data)
 
